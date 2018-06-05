@@ -1,0 +1,7 @@
+*.class
+*.log
+target/
+target-protobuf/
+.idea/
+*secret
+*secrets
