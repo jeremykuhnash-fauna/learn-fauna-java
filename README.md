@@ -8,7 +8,7 @@ The early examples will be based on a local "Developers" copy of Fauna. This is 
 ```
 $ java -jar faunadb-developer.jar
 
-aunaDB Developer Edition 2.5.2-2777f20
+FaunaDB Developer Edition 2.5.2-2777f20
 ======================================
 Starting...
 No configuration file specified; loading defaults...
