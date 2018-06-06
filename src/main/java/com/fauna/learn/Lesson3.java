@@ -21,6 +21,7 @@ package com.fauna.learn;
  * They should best be thought of as a convenience items for our demo apps.
  */
 import com.faunadb.client.query.Expr;
+import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +33,7 @@ import com.google.common.base.Optional;
 
 import java.util.List;
 import java.util.Arrays;
+import java.util.function.Consumer;
 import java.util.stream.IntStream;
 import java.util.stream.Collectors;
 
@@ -205,6 +207,16 @@ public class Lesson3 {
                         Lambda(Value("x"), Select(Value("data"), Get(Var("x"))))
                 )
         ).get();
+
+        List<Customer> customers = ImmutableList.copyOf(result.asCollectionOf(Customer.class).get());
+        logger.info("customers size: " + customers.size());
+        customers.forEach(new Consumer<Customer>() {
+            @Override
+            public void accept(Customer customer) {
+                logger.info("next customer: " + customer);
+            }
+        });
+
 
         Optional<Value> dataPage = result.getOptional(Field.at("data"));
         if (dataPage.isPresent()) {

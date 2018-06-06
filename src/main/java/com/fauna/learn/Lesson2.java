@@ -140,19 +140,17 @@ public class Lesson2 {
         logger.info("Created customer_by_id index :: {}", toPrettyJson(result));
     }
 
-    private static void createCustomer(FaunaClient client, int custID, int balance) throws Exception {
+    private static void createCustomer(FaunaClient client, Customer customer) throws Exception {
         /*
          * Create a customer (record)
          */
         Value result = client.query(
                 Create(
                         Class(Value("customers")),
-                        Obj("data",
-                                Obj("id", Value(custID), "balance", Value(balance))
-                        )
+                        Obj("data", Encoder.encode(customer).get())
                 )
         ).get();
-        logger.info("Create \'customer\' {}: \n{}", custID, toPrettyJson(result));
+        logger.info("Create actual \'customer\' {}: \n{}", customer.getId(), toPrettyJson(result));
     }
 
     private static void readCustomer(FaunaClient client, int custID) throws Exception {
@@ -162,7 +160,19 @@ public class Lesson2 {
         Value result = client.query(
                 Select(Value("data"), Get(Match(Index("customer_by_id"), Value(custID))))
         ).get();
+
+
         logger.info("Read \'customer\' {}: \n{}", custID, toPrettyJson(result));
+
+        Customer c1 = result.to(Customer.class).get();
+        logger.info("Read customer 1: " + c1);
+
+        Customer c2 = Decoder.decode(result, Customer.class).get();
+        logger.info("Read customer 2: " + c2);
+
+        Customer c3 = result.get(Customer.CUSTOMER_FIELD);
+        logger.info("Read customer 3: " + c3);
+
     }
 
     private static void updateCustomer(FaunaClient client, int custID, int newBalance) throws Exception {
@@ -204,7 +214,7 @@ public class Lesson2 {
 
         createSchema(client);
 
-        createCustomer(client, 0, 100);
+        createCustomer(client, new Customer(0, 100));
 
         readCustomer(client, 0);
 
