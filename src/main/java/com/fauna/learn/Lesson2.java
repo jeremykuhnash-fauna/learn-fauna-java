@@ -167,9 +167,6 @@ public class Lesson2 {
         Customer c1 = result.to(Customer.class).get();
         logger.info("Read customer 1: " + c1);
 
-        Customer c2 = Decoder.decode(result, Customer.class).get();
-        logger.info("Read customer 2: " + c2);
-
     }
 
     private static void updateCustomer(FaunaClient client, int custID, int newBalance) throws Exception {

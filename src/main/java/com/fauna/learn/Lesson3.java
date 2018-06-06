@@ -20,6 +20,7 @@ package com.fauna.learn;
  * These imports are for basic functionality around logging and JSON handling and Futures.
  * They should best be thought of as a convenience items for our demo apps.
  */
+
 import com.faunadb.client.query.Expr;
 import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
@@ -31,9 +32,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import com.google.common.base.Optional;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Arrays;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Collectors;
 
@@ -46,7 +49,9 @@ import java.util.stream.Collectors;
  */
 import com.faunadb.client.*;
 import com.faunadb.client.types.*;
+
 import static com.faunadb.client.query.Language.*;
+import static java.util.stream.Collectors.toList;
 
 public class Lesson3 {
     private static final Logger logger = LoggerFactory.getLogger(Lesson1.class);
@@ -64,7 +69,7 @@ public class Lesson3 {
         return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(value);
     }
 
-    private static String createDatabase(String sURL, String secret , String dbName) throws Exception {
+    private static String createDatabase(String sURL, String secret, String dbName) throws Exception {
         /*
          * Create an admin connection to FaunaDB.
          */
@@ -165,10 +170,11 @@ public class Lesson3 {
         List<Integer> range = IntStream
                 .rangeClosed(1, 20)
                 .boxed()
-                .collect(Collectors.toList());
+                .collect(toList());
+
         Value result = client.query(
                 Map(Value(range),
-                        Lambda( Value("id"),
+                        Lambda(Value("id"),
                                 Create(
                                         Class(Value("customers")),
                                         Obj("data",
@@ -178,6 +184,33 @@ public class Lesson3 {
                         )
                 )
         ).get();
+
+        Collection<Customer> customerCollection = result.asCollectionOf(Customer.class).get();
+        logger.info("createCustomers customers size: " + customerCollection.size());
+        customerCollection.forEach(customer -> logger.info("createCustomers next customer: " + customer));
+        logger.info("Created list of 20 customers: \n{}", toPrettyJson(result));
+    }
+
+    private static void saveAllCustomers(FaunaClient client, List<Customer> customers) throws Exception {
+
+        Value result = client.query(
+                Foreach(
+                        Value(customers),
+                        Lambda(Value("x"),
+                                Create(
+                                        Class(Value("customers")),
+                                        Obj("data", Var("x"))
+                                )
+                        )
+
+                )
+        ).get();
+
+        logger.info("Created list of customers from customers: \n{}", toPrettyJson(result));
+
+        Collection<Customer> customerCollection = result.asCollectionOf(Customer.class).get();
+        logger.info("saveAllCustomers customers size: " + customerCollection.size());
+        customerCollection.forEach(customer -> logger.info("saveAllCustomers next customer: " + customer));
     }
 
     private static void readCustomer(FaunaClient client, int custID) throws Exception {
@@ -188,6 +221,10 @@ public class Lesson3 {
                 Select(Value("data"), Get(Match(Index("customer_by_id"), Value(custID))))
         ).get();
         logger.info("Read \'customer\' {}: \n{}", custID, toPrettyJson(result));
+
+
+        Customer c1 = result.to(Customer.class).get();
+        logger.info("Read customer: " + c1);
     }
 
     private static void readThreeCustomers(FaunaClient client, int custID_1, int custID_2, int custID_3) throws Exception {
@@ -196,7 +233,7 @@ public class Lesson3 {
          * by id and return the actual data underlying them.
          */
         Value result = client.query(
-                Map(
+                Select(Value("data"), Map(
                         Paginate(
                                 Union(
                                         Match(Index("customer_by_id"), Value(custID_1)),
@@ -204,24 +241,14 @@ public class Lesson3 {
                                         Match(Index("customer_by_id"), Value(custID_3))
                                 )
                         ),
-                        Lambda(Value("x"), Select(Value("data"), Get(Var("x"))))
-                )
+                        Lambda(Value("x"), Get(Var("x")))
+                ))
         ).get();
 
-     /*   List<Customer> customers = ImmutableList.copyOf(result.asCollectionOf(Customer.class).get());
-        logger.info("customers size: " + customers.size());
-        customers.forEach(new Consumer<Customer>() {
-            @Override
-            public void accept(Customer customer) {
-                logger.info("next customer: " + customer);
-            }
-        });
-*/
+        Collection<Customer> customerCollection = result.asCollectionOf(Customer.class).get();
 
-        Optional<Value> dataPage = result.getOptional(Field.at("data"));
-        if (dataPage.isPresent()) {
-            logger.info("Page Results: {}", toPrettyJson(dataPage.get()));
-        }
+        logger.info("readThreeCustomers customers size: " + customerCollection.size());
+        customerCollection.forEach(customer -> logger.info("readThreeCustomers next customer: " + customer));
     }
 
     private static void readListOfCustomers(FaunaClient client, List<Integer> custList) throws Exception {
@@ -230,23 +257,24 @@ public class Lesson3 {
          * and return the data for each.
          */
         Value result = client.query(
-                Map(
-                        Paginate(
-                                Union(
-                                        Map(
-                                                Value(custList),
-                                                Lambda(Value("y"), Match(Index("customer_by_id"), Var("y")))
+                Select(Value("data"),
+                        Map(
+                                Paginate(
+                                        Union(
+                                                Map(
+                                                        Value(custList),
+                                                        Lambda(Value("y"), Match(Index("customer_by_id"), Var("y")))
+                                                )
                                         )
-                                )
-                        ),
-                        Lambda(Value("x"), Select(Value("data"), Get(Var("x"))))
+                                ),
+                                Lambda(Value("x"), Select(Value("data"), Get(Var("x"))))
+                        )
                 )
         ).get();
 
-        Optional<Value> dataPage = result.getOptional(Field.at("data"));
-        if (dataPage.isPresent()) {
-            logger.info("Page Results: {}", toPrettyJson(dataPage.get()));
-        }
+        Collection<Customer> customerCollection = result.asCollectionOf(Customer.class).get();
+        logger.info("readListOfCustomers customers size: " + customerCollection.size());
+        customerCollection.forEach(customer -> logger.info("readListOfCustomers next customer: " + customer));
     }
 
     private static void readCustomersLessThan(FaunaClient client, int maxCustID) throws Exception {
@@ -257,34 +285,35 @@ public class Lesson3 {
          * 'before' to yield the expected results.
          */
         Value result = client.query(
-                Map(
+                Select(Value("data"), Map(
                         Paginate(Match(Index("customer_id_filter"))).before(Value(maxCustID)),
                         Lambda(Value("x"), Select(Value("data"), Get(Select(Value(1), Var("x")))))
+                        )
                 )
         ).get();
 
-        Optional<Value> dataPage = result.getOptional(Field.at("data"));
-        if (dataPage.isPresent()) {
-            logger.info("Query for id\'s < {} : {}", maxCustID, toPrettyJson(dataPage.get()));
-        }
+        Collection<Customer> customerCollection = result.asCollectionOf(Customer.class).get();
+        logger.info("readCustomersLessThan customers size: " + customerCollection.size());
+        customerCollection.forEach(customer -> logger.info("readCustomersLessThan next customer: " + customer));
+
     }
 
-    private static void readCustomersBetween(FaunaClient client, int minCustID,int maxCustID) throws Exception {
+    private static void readCustomersBetween(FaunaClient client, int minCustID, int maxCustID) throws Exception {
         /*
          * Extending the previous example to show getting a range between two values.
          */
         Value result = client.query(
-                Map(
+                Select(Value("data"), Map(
                         Filter(Paginate(Match(Index("customer_id_filter"))).before(Value(maxCustID)),
                                 Lambda(Value("y"), LTE(Value(minCustID), Select(Value(0), Var("y"))))),
                         Lambda(Value("x"), Select(Value("data"), Get(Select(Value(1), Var("x")))))
+                        )
                 )
         ).get();
 
-        Optional<Value> dataPage = result.getOptional(Field.at("data"));
-        if (dataPage.isPresent()) {
-            logger.info("Query for id\'s >= {}  and < {} : {}", minCustID, maxCustID, toPrettyJson(dataPage.get()));
-        }
+        Collection<Customer> customerCollection = result.asCollectionOf(Customer.class).get();
+        logger.info("readCustomersBetween customers size: " + customerCollection.size());
+        customerCollection.forEach(customer -> logger.info("readCustomersLessThan next customer: " + customer));
     }
 
     private static void readAllCustomers(FaunaClient client) throws Exception {
@@ -308,11 +337,17 @@ public class Lesson3 {
             }
 
             Value result = client.query(
-                    Map(
+                    Select(Value("data"), Map(
                             paginationExpr,
                             Lambda(Value("x"), Select(Value("data"), Get(Select(Value(1), Var("x")))))
+                            )
+
                     )
             ).get();
+
+            Collection<Customer> customerCollection = result.asCollectionOf(Customer.class).get();
+            logger.info("readAllCustomers customers size: " + customerCollection.size());
+            customerCollection.forEach(customer -> logger.info("readAllCustomers next customer: " + customer));
 
             dataPage = result.getOptional(Field.at("data"));
             if (dataPage.isPresent()) {
@@ -327,7 +362,8 @@ public class Lesson3 {
         } while (cursorPos.isPresent());
     }
 
-    public static void main(String[] args)  throws Exception {
+
+    public static void main(String[] args) throws Exception {
         String dcURL = "http://127.0.0.1:8443";
         String secret = "secret";
         String dbName = "LedgerExample";
@@ -338,14 +374,21 @@ public class Lesson3 {
 
         createSchema(client);
 
+        Customer c1 = new Customer(101, 200);
+        Customer c2 = new Customer(102, 300);
+        Customer c3 = new Customer(103, 400);
+        Customer c4 = new Customer(104, 500);
+        List<Customer> customerList = Arrays.asList(c1, c2, c3, c4);
+        saveAllCustomers(client, customerList);
+
         createCustomers(client);
 
         readCustomer(client, 1);
 
-        readThreeCustomers(client, 1,3,7);
+        readThreeCustomers(client, 1, 3, 7);
 
         int[] customers = {1, 3, 6, 7};
-        List<Integer> custList =  Arrays.stream(customers).boxed().collect(Collectors.toList());
+        List<Integer> custList = Arrays.stream(customers).boxed().collect(toList());
         readListOfCustomers(client, custList);
 
         readCustomersLessThan(client, 5);
