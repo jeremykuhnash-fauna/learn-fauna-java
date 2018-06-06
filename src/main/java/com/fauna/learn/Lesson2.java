@@ -20,6 +20,7 @@ package com.fauna.learn;
  * These imports are for basic functionality around logging and JSON handling and Futures.
  * They should best be thought of as a convenience items for our demo apps.
  */
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +39,7 @@ import com.google.common.base.Optional;
  */
 import com.faunadb.client.*;
 import com.faunadb.client.types.*;
+
 import static com.faunadb.client.query.Language.*;
 
 public class Lesson2 {
@@ -56,7 +58,7 @@ public class Lesson2 {
         return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(value);
     }
 
-    private static String createDatabase(String sURL, String secret , String dbName) throws Exception {
+    private static String createDatabase(String sURL, String secret, String dbName) throws Exception {
         /*
          * Create an admin client. This is the client we will use to create the database.
          */
@@ -128,10 +130,10 @@ public class Lesson2 {
         result = client.query(
                 CreateIndex(
                         Obj(
-                                "name", Value("customer_by_id"),
-                                "source", Class(Value("customers")),
-                                "unique", Value(true),
-                                "terms", Arr(Obj("field", Arr(Value("data"), Value("id"))))
+                            "name", Value("customer_by_id"),
+                            "source", Class(Value("customers")),
+                            "unique", Value(true),
+                            "terms", Arr(Obj("field", Arr(Value("data"), Value("id"))))
                         )
                 )
         ).get();
