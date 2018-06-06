@@ -208,7 +208,7 @@ public class Lesson3 {
                 )
         ).get();
 
-        List<Customer> customers = ImmutableList.copyOf(result.asCollectionOf(Customer.class).get());
+     /*   List<Customer> customers = ImmutableList.copyOf(result.asCollectionOf(Customer.class).get());
         logger.info("customers size: " + customers.size());
         customers.forEach(new Consumer<Customer>() {
             @Override
@@ -216,7 +216,7 @@ public class Lesson3 {
                 logger.info("next customer: " + customer);
             }
         });
-
+*/
 
         Optional<Value> dataPage = result.getOptional(Field.at("data"));
         if (dataPage.isPresent()) {

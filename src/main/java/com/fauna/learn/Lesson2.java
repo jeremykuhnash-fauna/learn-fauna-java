@@ -147,7 +147,7 @@ public class Lesson2 {
         Value result = client.query(
                 Create(
                         Class(Value("customers")),
-                        Obj("data", Encoder.encode(customer).get())
+                        Obj("data", Value(customer))
                 )
         ).get();
         logger.info("Create actual \'customer\' {}: \n{}", customer.getId(), toPrettyJson(result));
@@ -169,9 +169,6 @@ public class Lesson2 {
 
         Customer c2 = Decoder.decode(result, Customer.class).get();
         logger.info("Read customer 2: " + c2);
-
-        Customer c3 = result.get(Customer.CUSTOMER_FIELD);
-        logger.info("Read customer 3: " + c3);
 
     }
 
