@@ -24,4 +24,12 @@ public class Customer {
     public int getBalance() {
         return balance;
     }
+
+    @Override
+    public String toString() {
+        return "Customer{" +
+                "id=" + id +
+                ", balance=" + balance +
+                '}';
+    }
 }

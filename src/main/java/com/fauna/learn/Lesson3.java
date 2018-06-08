@@ -54,6 +54,11 @@ import static com.faunadb.client.query.Language.*;
 import static java.util.stream.Collectors.toList;
 
 public class Lesson3 {
+
+    // The fauna field data is the field with query data.  Use a static const to refer to the string.
+    // i.e. {"ref": ..., "ts": ..., data":...}
+    private static String FAUNA_DATA = "data";
+
     private static final Logger logger = LoggerFactory.getLogger(Lesson1.class);
 
     private static ObjectMapper mapper = getMapper();
@@ -144,7 +149,7 @@ public class Lesson3 {
                                         "name", Value("customer_by_id"),
                                         "source", Class(Value("customers")),
                                         "unique", Value(true),
-                                        "terms", Arr(Obj("field", Arr(Value("data"), Value("id"))))
+                                        "terms", Arr(Obj("field", Arr(Value(FAUNA_DATA), Value("id"))))
                                 )
                         ),
                         CreateIndex(
@@ -153,7 +158,7 @@ public class Lesson3 {
                                         "source", Class(Value("customers")),
                                         "unique", Value(true),
                                         "values", Arr(
-                                                Obj("field", Arr(Value("data"), Value("id"))),
+                                                Obj("field", Arr(Value(FAUNA_DATA), Value("id"))),
                                                 Obj("field", Arr(Value("ref")))
                                         )
                                 )
@@ -177,7 +182,7 @@ public class Lesson3 {
                         Lambda(Value("id"),
                                 Create(
                                         Class(Value("customers")),
-                                        Obj("data",
+                                        Obj(FAUNA_DATA,
                                                 Obj("id", Var("id"), "balance", Multiply(Var("id"), Value(10)))
                                         )
                                 )
@@ -193,13 +198,16 @@ public class Lesson3 {
 
     private static void saveAllCustomers(FaunaClient client, List<Customer> customers) throws Exception {
 
+        //FQL Lambda Variable for each customer
+        String NXT_CUSTOMER = "NEXT_CUSTOMER";
+
         Value result = client.query(
                 Foreach(
                         Value(customers),
-                        Lambda(Value("x"),
+                        Lambda(Value(NXT_CUSTOMER),
                                 Create(
                                         Class(Value("customers")),
-                                        Obj("data", Var("x"))
+                                        Obj(FAUNA_DATA, Var(NXT_CUSTOMER))
                                 )
                         )
 
@@ -218,7 +226,7 @@ public class Lesson3 {
          * Read the customer we just created
          */
         Value result = client.query(
-                Select(Value("data"), Get(Match(Index("customer_by_id"), Value(custID))))
+                Select(Value(FAUNA_DATA), Get(Match(Index("customer_by_id"), Value(custID))))
         ).get();
         logger.info("Read \'customer\' {}: \n{}", custID, toPrettyJson(result));
 
@@ -232,8 +240,12 @@ public class Lesson3 {
          * Here is a more general use case where we retrieve multiple class references
          * by id and return the actual data underlying them.
          */
+
+        //FQL Lambda Variable for each customer refrence id
+        String CUST_REF_ID = "CUST_REF_ID";
+
         Value result = client.query(
-                Select(Value("data"), Map(
+                Select(Value(FAUNA_DATA), Map(
                         Paginate(
                                 Union(
                                         Match(Index("customer_by_id"), Value(custID_1)),
@@ -241,7 +253,7 @@ public class Lesson3 {
                                         Match(Index("customer_by_id"), Value(custID_3))
                                 )
                         ),
-                        Lambda(Value("x"), Get(Var("x")))
+                        Lambda(Value(CUST_REF_ID), Get(Var(CUST_REF_ID)))
                 ))
         ).get();
 
@@ -256,18 +268,25 @@ public class Lesson3 {
          * Finally a much more general use case where we can supply any number of id values
          * and return the data for each.
          */
+
+        //FQL Lambda Variable for each customer id
+        String CUST_ID = "CUST_ID";
+
+        //FQL Lambda Variable for each customer refrence id
+        String CUST_REF_ID = "CUST_REF";
+
         Value result = client.query(
-                Select(Value("data"),
+                Select(Value(FAUNA_DATA),
                         Map(
                                 Paginate(
                                         Union(
                                                 Map(
                                                         Value(custList),
-                                                        Lambda(Value("y"), Match(Index("customer_by_id"), Var("y")))
+                                                        Lambda(Value(CUST_ID), Match(Index("customer_by_id"), Var(CUST_ID)))
                                                 )
                                         )
                                 ),
-                                Lambda(Value("x"), Select(Value("data"), Get(Var("x"))))
+                                Lambda(Value(CUST_REF_ID), Select(Value(FAUNA_DATA), Get(Var(CUST_REF_ID))))
                         )
                 )
         ).get();
@@ -285,9 +304,10 @@ public class Lesson3 {
          * 'before' to yield the expected results.
          */
         Value result = client.query(
-                Select(Value("data"), Map(
-                        Paginate(Match(Index("customer_id_filter"))).before(Value(maxCustID)),
-                        Lambda(Value("x"), Select(Value("data"), Get(Select(Value(1), Var("x")))))
+                Select(Value(FAUNA_DATA),
+                        Map(
+                                Paginate(Match(Index("customer_id_filter"))).before(Value(maxCustID)),
+                                Lambda(Value("x"), Select(Value("data"), Get(Select(Value(1), Var("x")))))
                         )
                 )
         ).get();
@@ -295,7 +315,6 @@ public class Lesson3 {
         Collection<Customer> customerCollection = result.asCollectionOf(Customer.class).get();
         logger.info("readCustomersLessThan customers size: " + customerCollection.size());
         customerCollection.forEach(customer -> logger.info("readCustomersLessThan next customer: " + customer));
-
     }
 
     private static void readCustomersBetween(FaunaClient client, int minCustID, int maxCustID) throws Exception {
@@ -303,17 +322,17 @@ public class Lesson3 {
          * Extending the previous example to show getting a range between two values.
          */
         Value result = client.query(
-                Select(Value("data"), Map(
+                Select(Value(FAUNA_DATA), Map(
                         Filter(Paginate(Match(Index("customer_id_filter"))).before(Value(maxCustID)),
                                 Lambda(Value("y"), LTE(Value(minCustID), Select(Value(0), Var("y"))))),
-                        Lambda(Value("x"), Select(Value("data"), Get(Select(Value(1), Var("x")))))
+                        Lambda(Value("x"), Select(Value(FAUNA_DATA), Get(Select(Value(1), Var("x")))))
                         )
                 )
         ).get();
 
         Collection<Customer> customerCollection = result.asCollectionOf(Customer.class).get();
         logger.info("readCustomersBetween customers size: " + customerCollection.size());
-        customerCollection.forEach(customer -> logger.info("readCustomersLessThan next customer: " + customer));
+        customerCollection.forEach(customer -> logger.info("readCustomersBetween next customer: " + customer));
     }
 
     private static void readAllCustomers(FaunaClient client) throws Exception {
@@ -337,22 +356,16 @@ public class Lesson3 {
             }
 
             Value result = client.query(
-                    Select(Value("data"), Map(
+                    Map(
                             paginationExpr,
-                            Lambda(Value("x"), Select(Value("data"), Get(Select(Value(1), Var("x")))))
-                            )
-
+                            Lambda(Value("x"), Select(Value(FAUNA_DATA), Get(Select(Value(1), Var("x")))))
                     )
             ).get();
 
-            Collection<Customer> customerCollection = result.asCollectionOf(Customer.class).get();
+            //{"after":..., "before":..., "data":...}
+            Collection<Customer> customerCollection = result.get(Field.at(FAUNA_DATA)).asCollectionOf(Customer.class).get();
             logger.info("readAllCustomers customers size: " + customerCollection.size());
             customerCollection.forEach(customer -> logger.info("readAllCustomers next customer: " + customer));
-
-            dataPage = result.getOptional(Field.at("data"));
-            if (dataPage.isPresent()) {
-                logger.info("Page Results: {}", toPrettyJson(dataPage.get()));
-            }
 
             cursorPos = result.getOptional(Field.at("after"));
             if (cursorPos.isPresent()) {
