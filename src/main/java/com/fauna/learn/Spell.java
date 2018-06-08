@@ -2,12 +2,15 @@ package com.fauna.learn;
 
 import com.faunadb.client.types.FaunaConstructor;
 import com.faunadb.client.types.FaunaField;
+import com.faunadb.client.types.FaunaIgnore;
 
 public class Spell {
 
     @FaunaField private String name;
     @FaunaField private String element;
     @FaunaField private int cost;
+
+    @FaunaIgnore  private String notUsed;
 
     @FaunaConstructor
     public Spell(@FaunaField("name") String name, @FaunaField("element") String element, @FaunaField("cost") int cost) {
