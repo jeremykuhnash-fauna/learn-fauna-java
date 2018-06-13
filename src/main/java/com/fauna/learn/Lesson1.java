@@ -20,6 +20,7 @@ package com.fauna.learn;
  * These imports are for basic functionality around logging and JSON handling and Futures.
  * They should best be thought of as a convenience items for our demo apps.
  */
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +56,7 @@ public class Lesson1 {
         return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(value);
     }
 
-    public static void main(String[] args)  throws Exception {
+    public static void main(String[] args) throws Exception {
         /*
          * Create an admin connection to FaunaDB.
          *
@@ -64,9 +65,9 @@ public class Lesson1 {
          *  - substitute your secret for "secret" below
          */
         FaunaClient adminClient = FaunaClient.builder()
-                .withEndpoint("http://127.0.0.1:8443")
-                .withSecret("secret")
-                .build();
+            .withEndpoint("http://127.0.0.1:8443")
+            .withSecret("secret")
+            .build();
         logger.info("Succesfully connected to FaunaDB as Admin!");
 
         /*
@@ -77,7 +78,7 @@ public class Lesson1 {
         Value result;
 
         result = adminClient.query(
-                CreateDatabase(Obj("name", Value(dbName)))
+            CreateDatabase(Obj("name", Value(dbName)))
         ).get();
         logger.info("Successfully created database: {} :: \n{}", dbName, toPrettyJson(result));
 
@@ -85,11 +86,11 @@ public class Lesson1 {
          * Delete the Database that we created
          */
         result = adminClient.query(
-                If(
-                        Exists(Database(dbName)),
-                        Delete(Database(dbName)),
-                        Value(true)
-                )
+            If(
+                Exists(Database(dbName)),
+                Delete(Database(dbName)),
+                Value(true)
+            )
         ).get();
         logger.info("Deleted database: {} :: \n{}", dbName, toPrettyJson(result));
 
@@ -98,8 +99,5 @@ public class Lesson1 {
          */
         adminClient.close();
         logger.info("Disconnected from FaunaDB as Admin!");
-
-        // add this at the end of execution to make things shut down nicely
-        System.exit(0);
     }
 }

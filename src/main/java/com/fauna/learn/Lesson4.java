@@ -294,8 +294,5 @@ public class Lesson4 {
          */
         client.close();
         logger.info("Disconnected from FaunaDB as server for DB {}!", dbName);
-
-        // add this at the end of execution to make things shut down nicely
-        System.exit(0);
     }
 }
