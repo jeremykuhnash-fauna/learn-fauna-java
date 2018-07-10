@@ -4,16 +4,18 @@ import com.faunadb.client.types.FaunaConstructor;
 import com.faunadb.client.types.FaunaField;
 import com.faunadb.client.types.FaunaIgnore;
 
+import java.util.List;
+
 public class Spell {
 
     @FaunaField private String name;
-    @FaunaField private String element;
+    @FaunaField private List<Element> element;
     @FaunaField private int cost;
 
     @FaunaIgnore  private String notUsed;
 
     @FaunaConstructor
-    public Spell(@FaunaField("name") String name, @FaunaField("element") String element, @FaunaField("cost") int cost) {
+    public Spell(@FaunaField("name") String name, @FaunaField("element") List<Element> element, @FaunaField("cost") int cost) {
         this.name = name;
         this.element = element;
         this.cost = cost;
@@ -23,7 +25,7 @@ public class Spell {
         return name;
     }
 
-    public String getElement() {
+    public List<Element> getElement() {
         return element;
     }
 

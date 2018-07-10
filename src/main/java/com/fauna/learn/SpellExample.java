@@ -25,13 +25,13 @@ public class SpellExample {
          *
          * If you are using the FaunaDB-Cloud version:
          *  - remove the 'withEndpoint' line below
-         *  - substitute your secret for "secret" below
+         *  - substitute "secret" for your authentication key's secret
          */
         FaunaClient adminClient = FaunaClient.builder()
-            .withEndpoint("http://127.0.0.1:8443")
-            .withSecret("secret")
+            //.withEndpoint("http://127.0.0.1:8443")
+            .withSecret("fnAC1R-DWpACB7raaCMPn8j2g7n4Q-0UPnIDWPft")
             .build();
-        System.out.println("Succesfully connected to FaunaDB as Admin\n");
+        System.out.println("Successfully connected to FaunaDB as Admin\n");
 
         /*
          * Create a database
@@ -71,7 +71,7 @@ public class SpellExample {
         /*
          * Delete the database and close the admin connection
          */
-        deleteDB(adminClient, DB_NAME);
+        //deleteDB(adminClient, DB_NAME);
         adminClient.close();
         System.out.println("Disconnected from FaunaDB as Admin!");
     }
@@ -140,20 +140,25 @@ public class SpellExample {
          * Read the hippo back that we just created
          */
 
-        Value getHippoResults = client.query(
+        Value readHippoResults = client.query(
             Select(Value("data"), Get(hippoRef))
         ).get();
-        System.out.println("Hippo Spell:\n " + getHippoResults + "\n");
+        System.out.println("Hippo Spell:\n " + readHippoResults + "\n");
 
         //convert the hippo results into primitive elements
-        String element = getHippoResults.at("element").to(String.class).get();
-        System.out.println("spell element = " + element);
+        String name = readHippoResults.at("name").to(String.class).get();
+        Integer cost = readHippoResults.at("cost").to(Integer.class).get();
+        String element = readHippoResults.at("element").to(String.class).get();
+
+        System.out.println(String.format(
+            "Spell Details: Name=%s, Cost=%d, Element=%s", name, cost, element));
+
 
         //This would return an empty option if the field is not found or the conversion fails
-        Optional<String> optSpellElement = getHippoResults.at("element").to(String.class).getOptional();
+        Optional<String> optSpellElement = readHippoResults.at("element").to(String.class).getOptional();
         if (optSpellElement.isPresent()) {
             String element2 = optSpellElement.get();
-            System.out.println("optional spell element 2 = " + element2);
+            System.out.println("optional spell element = " + element2);
         } else {
             System.out.println("Something went wrong reading the spell");
         }
@@ -174,7 +179,11 @@ public class SpellExample {
         /*
          * Store a Spell java class
          */
-        Spell newSpell = new Spell("Water Dragon's Claw", "water", 25);
+        Element waterElement = new Element("sea water", "water from the caspian sea");
+        Element iceElement = new Element("glacier ice", "Glacier Ice from mount shasta");
+        List<Element> elements = Arrays.asList(waterElement, iceElement);
+
+        Spell newSpell = new Spell("Water Dragon's Claw", elements, 25);
         Value storeSpellResult = client.query(
             Create(
                 Class(Value(SPELLS_CLASS)),
@@ -199,9 +208,9 @@ public class SpellExample {
          * Store a list of Spells
          */
 
-        Spell spellOne = new Spell("Chill Touch", "ice", 18);
-        Spell spellTwo = new Spell("Dancing Lights", "fire", 45);
-        Spell spellThree = new Spell("Fire Bolt", "fire", 32);
+        Spell spellOne = new Spell("Chill Touch", elements, 18);
+        Spell spellTwo = new Spell("Dancing Lights", elements, 45);
+        Spell spellThree = new Spell("Fire Bolt", elements, 32);
         List<Spell> spellList = Arrays.asList(spellOne, spellTwo, spellThree);
 
         //Lambda Variable for each spell
@@ -248,9 +257,14 @@ public class SpellExample {
                     Paginate(
                         Match(Index(Value(INDEX_NAME)))
                     ),
-                    Lambda(Value(REF_SPELL_ID), Get(Var(REF_SPELL_ID))))
+                    Lambda(Value(REF_SPELL_ID), Select(Value("data"),Get(Var(REF_SPELL_ID)))))
             )
         ).get();
+
+        /**
+         Map(Paginate(Match(Index("spells_index"))), Lambda("x", Get(Var("x")))))
+         Map(Paginate(Match(Index("spells_index"))), Lambda("x", Select("data",Get(Var("x"))))))
+         */
 
         Collection<Spell> allSpellsCollection = findAllSpells.asCollectionOf(Spell.class).get();
         System.out.println("read " + allSpellsCollection.size() + " spells:");
