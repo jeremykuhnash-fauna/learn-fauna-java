@@ -3,7 +3,6 @@ package com.fauna.learn;
 import com.faunadb.client.FaunaClient;
 import com.faunadb.client.query.Expr;
 import com.faunadb.client.types.Value;
-import com.google.common.base.Optional;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -29,7 +28,7 @@ public class SpellExample {
          */
         FaunaClient adminClient = FaunaClient.builder()
             //.withEndpoint("http://127.0.0.1:8443")
-            .withSecret("fnAC1R-DWpACB7raaCMPn8j2g7n4Q-0UPnIDWPft")
+            .withSecret("fnAC1R-0UPnIDWPft")
             .build();
         System.out.println("Successfully connected to FaunaDB as Admin\n");
 
@@ -101,7 +100,7 @@ public class SpellExample {
          * Add some entries to the spells class
          */
 
-        Value addFireResults = client.query(
+    /*    Value addFireResults = client.query(
             Create(
                 Class(Value(SPELLS_CLASS)),
                 Obj("data",
@@ -134,11 +133,12 @@ public class SpellExample {
 
         //The results at 'ref' are a resource pointer to the class that was just created.
         Value hippoRef = addHippoResults.at("ref");
-        System.out.println("hippoRef = " + hippoRef);
+        System.out.println("hippoRef = " + hippoRef);*/
 
         /*
          * Read the hippo back that we just created
          */
+/*
 
         Value readHippoResults = client.query(
             Select(Value("data"), Get(hippoRef))
@@ -152,17 +152,18 @@ public class SpellExample {
 
         System.out.println(String.format(
             "Spell Details: Name=%s, Cost=%d, Element=%s", name, cost, element));
+*/
 
 
         //This would return an empty option if the field is not found or the conversion fails
-        Optional<String> optSpellElement = readHippoResults.at("element").to(String.class).getOptional();
+   /*     Optional<String> optSpellElement = readHippoResults.at("element").to(String.class).getOptional();
         if (optSpellElement.isPresent()) {
             String element2 = optSpellElement.get();
             System.out.println("optional spell element = " + element2);
         } else {
             System.out.println("Something went wrong reading the spell");
         }
-
+*/
         /*
          * Query for all the spells in the index
          */
@@ -257,7 +258,7 @@ public class SpellExample {
                     Paginate(
                         Match(Index(Value(INDEX_NAME)))
                     ),
-                    Lambda(Value(REF_SPELL_ID), Select(Value("data"),Get(Var(REF_SPELL_ID)))))
+                    Lambda(Value(REF_SPELL_ID), Get(Var(REF_SPELL_ID))))
             )
         ).get();
 

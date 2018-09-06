@@ -22,7 +22,6 @@ package com.fauna.learn;
  */
 
 import com.faunadb.client.query.Expr;
-import com.google.common.collect.ImmutableList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,15 +29,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import com.google.common.base.Optional;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Arrays;
-import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.Optional;
 import java.util.stream.IntStream;
-import java.util.stream.Collectors;
 
 /*
  * These are the required imports for Fauna.
@@ -342,8 +338,8 @@ public class Lesson3 {
          *
          * NOTE: after is inclusive of the value.
          */
-        Optional<Value> dataPage = Optional.absent();
-        Optional<Value> cursorPos = Optional.absent();
+        Optional<Value> dataPage = Optional.empty();
+        Optional<Value> cursorPos = Optional.empty();
         Expr paginationExpr;
 
         int pageSize = 8;

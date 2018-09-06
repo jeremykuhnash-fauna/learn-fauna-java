@@ -28,8 +28,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import com.google.common.base.Optional;
-
 /*
  * These are the required imports for Fauna.
  *

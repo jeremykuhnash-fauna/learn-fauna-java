@@ -27,8 +27,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import com.google.common.base.Optional;
-
 import java.util.List;
 import java.util.stream.IntStream;
 import java.util.stream.Collectors;
@@ -183,7 +181,7 @@ public class Lesson4 {
                 )
         ).get();
 
-        List<Value> custRefs = result.collect(Field.at("ref")).asList();
+        List<Value> custRefs = result.collect(Field.at("ref"));
 
         logger.info("Created {} new customers with balance: {}", numCustomers, initBalance);
 
@@ -204,7 +202,7 @@ public class Lesson4 {
 
         int balance = 0;
 
-        List<Integer> data = result.collect(Field.at("balance").to(Codec.INTEGER)).asList();
+        List<Integer> data = result.collect(Field.at("balance").to(Codec.INTEGER));
         if (!data.isEmpty()) {
             for (Integer d : data) {
                 balance += d;
